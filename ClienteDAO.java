@@ -1,0 +1,175 @@
+package br.com.fiap.jdbc.dao;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import br.com.fiap.jdbc.model.Cliente;
+import br.com.fiap.jdbc.uteis.ConnectionFactory;
+
+public class ClienteDAO {
+
+	private Connection connection;
+
+	public ClienteDAO() {
+		this.connection = ConnectionFactory.getConnection();
+	}
+
+	public boolean clienteExiste(String email) {
+		String sql = "SELECT COUNT(*) FROM Cliente WHERE email = ?";
+		try (Connection conn = ConnectionFactory.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+			stmt.setString(1, email);
+			ResultSet rs = stmt.executeQuery();
+			if (rs.next()) {
+				int count = rs.getInt(1);
+				return count > 0;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+
+	public boolean inserir(Cliente cliente) {
+		if (clienteExiste(cliente.getEmail())) {
+			return false;
+		}
+		String sql = "INSERT INTO Cliente (nome, email, telefone) VALUES (?, ?, ?)";
+		try (Connection conn = ConnectionFactory.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+			stmt.setString(1, cliente.getNome());
+			stmt.setString(2, cliente.getEmail());
+			stmt.setString(3, cliente.getTelefone());
+			stmt.executeUpdate();
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+
+	public List<Cliente> listarTodos() {
+
+		String sql = "SELECT * FROM CLIENTE";
+
+		List<Cliente> clientes = new ArrayList<>();
+
+		try (PreparedStatement stmt = connection.prepareStatement(sql);
+
+				ResultSet rs = stmt.executeQuery()) {
+
+			while (rs.next()) {
+
+				Cliente cliente = new Cliente();
+
+				cliente.setIdCliente(rs.getInt("id_cliente"));
+
+				cliente.setNome(rs.getString("nome"));
+
+				cliente.setEmail(rs.getString("email"));
+
+				cliente.setTelefone(rs.getString("telefone"));
+
+				clientes.add(cliente);
+
+			}
+
+		} catch (SQLException e) {
+
+			System.err.println("Erro ao listar clientes: " + e.getMessage());
+
+		}
+
+		return clientes;
+
+	}
+
+	public boolean atualizar(Cliente cliente) {
+
+		String sql = "UPDATE CLIENTE SET nome = ?, email = ?, telefone = ? WHERE id_cliente = ?";
+
+		try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+
+			stmt.setString(1, cliente.getNome());
+
+			stmt.setString(2, cliente.getEmail());
+
+			stmt.setString(3, cliente.getTelefone());
+
+			stmt.setLong(4, cliente.getIdCliente());
+
+			return stmt.executeUpdate() > 0; //Retorna verdadeiro se a atualização foi bem-sucedida
+
+		} catch (SQLException e) {
+
+			System.err.println("Erro ao atualizar cliente: " + e.getMessage());
+
+			return false;
+
+		}
+
+	}
+
+
+	public boolean excluir(int idCliente) {
+
+		String sql = "DELETE FROM CLIENTE WHERE id_cliente = ?";
+
+		try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+
+			stmt.setInt(1, idCliente);
+
+			return stmt.executeUpdate() > 0; //Retorna verdadeiro se a exclusão foi bem-sucedida
+
+		} catch (SQLException e) {
+
+			System.err.println("Erro ao excluir cliente: " + e.getMessage());
+
+			return false; //Retorna falso em caso de erro
+
+		}
+
+	}
+
+
+	public Cliente buscarPorId(int id) {
+
+		String sql = "SELECT * FROM CLIENTE WHERE id_cliente = ?";
+
+		Cliente cliente = null;
+
+		try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+
+			stmt.setInt(1, id);
+
+			try (ResultSet rs = stmt.executeQuery()) {
+
+				if (rs.next()) {
+
+					cliente = new Cliente();
+
+					cliente.setIdCliente(rs.getInt("id_cliente"));
+
+					cliente.setNome(rs.getString("nome"));
+
+					cliente.setEmail(rs.getString("email"));
+
+					cliente.setTelefone(rs.getString("telefone"));
+
+				}
+
+			}
+
+		} catch (SQLException e) {
+
+			System.err.println("Erro ao buscar cliente por ID: " + e.getMessage());
+
+		}
+
+		return cliente;
+
+	}
+
+}
