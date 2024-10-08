@@ -1,0 +1,37 @@
+package br.com.fiap.jdbc.dao;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import br.com.fiap.jdbc.model.Cliente;
+import br.com.fiap.jdbc.model.Pedido;
+import br.com.fiap.jdbc.uteis.ConnectionFactory;
+
+public class PedidoDAO {
+    private Connection connection;
+
+    // Construtor que inicializa a conexão com o banco de dados
+    public PedidoDAO() {
+        this.connection = ConnectionFactory.getConnection();
+    }
+
+    // Inserir um novo pedido
+    public boolean inserir(Pedido pedido) {
+        String sql = "INSERT INTO Pedido (idCliente, dataPedido) VALUES (?, ?)";
+
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, pedido.getCliente().getIdCliente()); // Associa o ID do cliente ao pedido
+            stmt.setDate(2, new java.sql.Date(pedido.getDataPedido().getTime())); // Converte java.util.Date para java.sql.Date
+
+            return stmt.executeUpdate() > 0; // Retorna true se a inserção for bem-sucedida
+        } catch (SQLException e) {
+            System.err.println("Erro ao inserir pedido: " + e.getMessage());
+            return false;
+        }
+    }
+
+}
